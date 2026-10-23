@@ -1,0 +1,1 @@
+{"name":"condicoes-bancarias-ad-netlify","version":"1.0.0","private":true,"type":"module","engines":{"node":">=22"},"scripts":{"build":"node scripts/check-build.mjs","test":"node --test tests/auth.test.mjs && node tests/engine.test.cjs"}}

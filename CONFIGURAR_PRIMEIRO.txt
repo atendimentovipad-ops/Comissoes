@@ -1,0 +1,9 @@
+Este projeto ainda precisa de configuração externa antes de funcionar:
+
+1. Projeto Supabase com autenticação de e-mail e códigos de 6 dígitos (expiração 1800 segundos).
+2. Modelos de e-mail Magic Link e Confirm signup contendo {{ .Token }}.
+3. SMTP próprio configurado para entregar a funcionários.
+4. Três variáveis no Netlify: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY e SESSION_SECRET.
+5. Deploy pelo repositório Git; pasta pública = public. Não é um site para publicar por arrastar somente uma pasta estática.
+
+Não envie chaves por chat ou GitHub. Leia README.md para o passo a passo completo.

@@ -1,0 +1,44 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+require('../private-site/engine.js');const E=global.Comissoes;
+assert.equal(E.ticket('C6 | Tkt > 20k -Plus-ML | 108 - 108X').lo,20000);
+assert.equal(E.ticket('C6 | Tkt > 20k -Plus-ML | 108 - 108X').li,false);
+assert.equal(E.grace('C6 | Tkt > 20k -Plus-ML | 108 - 108X').days,0);
+assert.equal(E.grace('CARÊNCIA 90D').days,90);
+assert.equal(E.grace('Refin 2 (+60d Carencia)').days,60);
+assert.equal(E.grace('CARENCIA').days,null);
+assert.equal(E.ticket('TICKET de 6.000 a 20.000,00').hi,20000);
+assert.equal(E.ticket('TKT R$2000').uncertain,true);
+const prepared=E.prepare(JSON.parse(require('node:zlib').gunzipSync(fs.readFileSync('private-site/seed.json.gz')))),r=prepared.records;
+assert.ok(r.some(x=>x.bank==='Happy'));assert.ok(r.some(x=>x.bank==='ACREDTO'));
+const f={amount:15000,term:108,grace:0,agreement:'INSS',operation:'Novo',base:'Valor Liquido',type:'Flat',date:'2026-10-14'};
+const result=E.rank(r,f);assert.equal(new Set(result.banks.map(x=>x.bank)).size,result.banks.length);
+assert.ok(result.banks.every((x,i)=>!i||result.banks[i-1].fee>=x.fee));
+const c6=r.find(x=>x.bank==='C6 Bank'&&x.desc.includes('Tkt > 20k')&&x.operation==='Novo'&&x.to===108&&x.base==='Valor Liquido');assert.ok(c6);
+const custom={...f,grace:c6.grace.days,amount:20000};assert.equal(E.matches(c6,custom),false);
+assert.equal(E.matches(c6,{...custom,amount:20001}),true);
+assert.equal(E.matches(c6,{...custom,amount:20001,term:109}),false);
+assert.equal(E.matches(c6,{...custom,amount:20001,date:'2031-01-01'}),false);
+assert.equal(E.matches(c6,{...custom,amount:null,range:{lo:20000,hi:Infinity,li:false,ui:false},coverage:'all'}),true);
+const fixed={...c6,base:'Valor Fixo',fee:700};assert.equal(E.matches(fixed,f),false);
+assert.ok(result.rows.every(x=>x.base==='Valor Liquido'&&x.type==='Flat'));
+assert.throws(()=>E.prepare({headers:['Banco'],rows:[[1]]}),/Coluna obrigatória/);
+console.log(JSON.stringify({records:r.length,invalid:prepared.invalid,duplicates:prepared.duplicates,reference:prepared.reference,banks:new Set(r.map(x=>x.bank)).size,ticketAmbiguous:r.filter(x=>x.ticket.uncertain).length,top:result.banks.slice(0,5).map(x=>({bank:x.bank,fee:x.fee,id:x.id}))},null,2));
+console.log('PASS: faixas e fronteiras, vigência, carência, prazo 109, bases independentes, bancos completos e ordem do ranking.');
+
+assert.equal(E.ticket('TKT >= R$ 1.000 a R$ 20.000,00').hi,20000);
+assert.equal(E.ticket('TKT MIN R$1000 A MAX R$100000').hi,100000);
+assert.equal(E.ticket('INSS | Normal Até 29k| 108x').hi,29000);
+
+// O filtro por produto é preservado ao mudar valor ou prazo nos rankings.
+const selected=result.rows[0];assert.ok(selected);
+const product=selected.product;
+const byProduct=E.rank(r,{...f,product});
+assert.ok(byProduct.rows.length>0);
+assert.ok(byProduct.rows.every(x=>x.product===product));
+const byTerm=E.rank(r,{...f,product,term:96});
+assert.ok(byTerm.rows.every(x=>x.product===product));
+const byRange=E.rank(r,{...f,product,amount:null,range:{lo:6000,hi:20000,li:false,ui:true},coverage:'partial'});
+assert.ok(byRange.rows.every(x=>x.product===product));
+assert.equal(E.rank(r,{...f,product:'produto inexistente'}).rows.length,0);
+assert.equal(E.rank(r,{...f,product:''}).rows.length,result.rows.length);
+console.log('PASS: filtro de produto combinado com prazo/faixa e opção Todos.');

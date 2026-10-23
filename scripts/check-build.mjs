@@ -1,0 +1,10 @@
+import {readFile,readdir,stat} from 'node:fs/promises';
+import {gunzipSync} from 'node:zlib';
+import assert from 'node:assert/strict';
+const config=await readFile('netlify.toml','utf8');
+assert.ok(config.includes('publish = "public"'));assert.ok(config.includes('force = true'));
+assert.ok(!(await readdir('public')).some(f=>f!=='index.html'));
+const seed=await readFile('private-site/seed.json.gz');JSON.parse(gunzipSync(seed));
+assert.ok(seed.length<4_000_000,'Dados excedem o limite seguro de resposta da função.');
+for(const f of ['server/portal.mjs','server/security.mjs','server/login.html','server/login.js','server/login.css','netlify/functions/portal.mjs','private-site/index.html','private-site/engine.js','private-site/app.js','private-site/import-worker.js','private-site/vendor/xlsx.full.min.js'])assert.ok((await stat(f)).size>0);
+console.log('Build conferido: código e dados fora da pasta pública; dados gzip dentro do limite da função.');
