@@ -1,0 +1,49 @@
+AJUSTE DE DIAGNÓSTICO — BASE COMPARTILHADA
+Aplicar no mesmo projeto Condições Bancárias AD atualizado com o Comparativo.
+
+O erro da imagem não identifica, sozinho, qual configuração falhou. Este pacote
+não presume que falta migração e não cria outra migração.
+
+1. Extraia este ZIP.
+2. No GitHub conectado ao projeto, na raiz, Add file > Upload files.
+   Arraste somente a pasta src extraída. Os demais arquivos do repositório permanecem.
+3. Grave o commit: Identificar causa de falha na base compartilhada.
+4. Aguarde sincronizar e publique/atualize a versão no Lovable pelo controle disponível.
+5. Recarregue o site e clique em Atualizar base.
+6. Envie somente a mensagem com o código entre colchetes. Não envie chaves ou tokens.
+
+CÓDIGOS PRINCIPAIS
+MISSING_ADMIN_KEY: SUPABASE_SERVICE_ROLE_KEY não está disponível no servidor.
+  Confira a existência do segredo no Lovable Cloud. Nunca use prefixo VITE_.
+ADMIN_KEY_REJECTED: o backend rejeitou a credencial administrativa (HTTP 401).
+  Confira se a URL e a chave correspondem ao mesmo projeto. Não gere chave nova
+  nem altere migrações por tentativa sem conferir a configuração.
+MIGRATION_NOT_FOUND: o backend retornou tabela/função não encontrada.
+  Confira o projeto onde o SQL foi executado e a migração já incluída na atualização.
+BACKEND_PERMISSION_DENIED: o backend recusou a permissão (403 ou 42501).
+  Não desative RLS. Confira credencial e privilégios da operação.
+SHARED_STATE_MISSING: a consulta funcionou, mas falta o registro inicial da base.
+BACKEND_UNREACHABLE: falha de rede/timeout no contato com o backend.
+BACKEND_REQUEST_FAILED: resposta de erro não classificada. A mensagem inclui
+  apenas etapa, status HTTP e código sanitizado do provedor, quando disponível.
+AUTH_CONFIGURATION_MISSING: falta configuração de autenticação já usada no servidor.
+
+A tela deixa de afirmar que preservou uma base anterior se nenhuma base chegou
+a ser carregada. Isso era um falso positivo no primeiro carregamento.
+
+CONSULTA OPCIONAL SEM GRAVAÇÃO
+DIAGNOSTICO_SOMENTE_LEITURA.sql pode ser aberto, copiado e executado no SQL Editor
+no Lovable Cloud. Retorna existência das estruturas, bucket privado e permissão
+SELECT da role administrativa. Não contém credenciais e não altera registros.
+Essa consulta, sozinha, não comprova qual URL/credencial o runtime está usando;
+o código do diagnóstico identifica o resultado da consulta REAL feita pelo aplicativo.
+
+TESTES
+- 25 testes focados em armazenamento e interface aprovados.
+- Typecheck aprovado e build de produção aprovado.
+- Mensagens e logs são testados para não expor o texto bruto do provedor,
+  tokens, valores de chave ou cabeçalhos.
+- Logs contêm somente evento, etapa, código e status HTTP sanitizados.
+- A autenticação corporativa continua obrigatória.
+- Nenhum arquivo, reserva, tabela ou registro de produção foi criado/apagado.
+- A causa concreta no seu ambiente permanece pendente do novo código exibido.
